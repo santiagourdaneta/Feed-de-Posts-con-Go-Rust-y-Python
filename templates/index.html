@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mi Red Social</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
+    <meta charset="UTF-8">
+    <meta name="description" content="Una nueva red social creada con Go, Rust y Python. Conéctate con amigos y comparte tus ideas.">
+    <meta name="keywords" content="red social, Go, Rust, Python, comunidad, amigos, compartir">
+    <meta name="author" content="Tu Nombre">
+<meta property="og:title" content="Título de tu publicación">
+<meta property="og:description" content="Descripción breve de tu publicación.">
+<meta property="og:image" content="URL de la imagen de tu publicación">
+<meta property="og:url" content="URL completa de la publicación">
+<meta property="og:type" content="article">
+    <style>
+       
+           /* Cuando el body tiene la clase 'dark', aplica estos estilos */
+           body {
+               background-color: #121212;
+               color: #e0e0e0;
+           }          
+    </style>
+</head>
+<body>
+    <main class="container">
+       
+        <h1>Bienvenido a mi Red Social</h1>
+        <section id="posts-container">
+            {{range .}}
+                <article>
+                    <p>{{.Content}}</p>
+                    <small>Publicado por {{.Username}} en {{.CreatedAt}}</small>
+                </article>
+            {{end}}
+        </section>
+        <div id="loading" style="text-align: center; display: none;">Cargando más publicaciones...</div>
+    </main>
+    <script>
+
+//Variable para saber qué página estamos pidiendo
+let currentPage = 1;
+const postsPerPage = 10;
+const postsContainer = document.getElementById('posts-container');
+const loadingIndicator = document.getElementById('loading');
+let isFetching = false;
+let hasMorePosts = true; // Para saber si quedan más posts por cargar
+
+// Función para obtener las publicaciones del servidor
+async function fetchPosts() {
+    if (isFetching || !hasMorePosts) return;
+    isFetching = true;
+    loadingIndicator.style.display = 'block';
+
+    try {
+        // Le pasamos los parámetros de la página y el límite
+        const response = await fetch(`http://localhost:8082/api/posts/feed?page=${currentPage}&limit=${postsPerPage}`)
+        
+        if (!response.ok) {
+            console.error('Error del servidor:', response.status);
+            loadingIndicator.innerText = "Error al cargar las publicaciones.";
+            isFetching = false;
+            return;
+        }
+
+        const posts = await response.json();
+
+        loadingIndicator.style.display = 'none';
+        isFetching = false;
+
+        // Chequea si la lista de posts no está vacía
+        if (posts && Array.isArray(posts) && posts.length > 0) {
+            posts.forEach(post => {
+                const article = document.createElement('article');
+                article.innerHTML = `
+                    <p>${post.content}</p>
+                    <small>Publicado por ${post.username} en ${new Date(post.created_at).toLocaleString()}</small>
+                `;
+                postsContainer.appendChild(article);
+            });
+            currentPage++;
+        } else {
+            loadingIndicator.innerText = "No hay más publicaciones.";
+            hasMorePosts = false;
+        }
+    } catch (error) {
+        console.error('Error al conectar con el servidor:', error);
+        loadingIndicator.innerText = "Error al conectar con el servidor.";
+        isFetching = false;
+    }
+}
+
+// Escuchamos el scroll de la ventana
+window.addEventListener('scroll', () => {
+    // Si el usuario llega al final de la página
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+        fetchPosts(); // Pide más publicaciones
+    }
+});
+
+// Cuando la página carga por primera vez, pedimos las primeras publicaciones
+document.addEventListener('DOMContentLoaded', fetchPosts);
+
+    </script>
+</body>
+</html>

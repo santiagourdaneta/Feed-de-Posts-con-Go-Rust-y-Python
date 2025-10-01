@@ -1,0 +1,18 @@
+# Archivos binarios de Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+
+# Módulos de Go
+/go.sum
+/go.mod
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
+
+# Directorios de dependencias
+/vendor/
+/node_modules/
